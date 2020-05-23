@@ -1,3 +1,6 @@
+const pino = require('pino');
+const logger = pino({ level: process.env.LOG_LEVEL || 'debug' });
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
@@ -15,21 +18,33 @@ function streamChangeCallback(stream) {
 
   db.findOne({ twitchId: stream.userId }, async (err, doc) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
       return;
     }
     const guild = client.guilds.find(gld => gld.id == doc.guild);
     // TODO: if this happens then the database has users from a server the bot isn't on
-    if (!guild) return;
+    if (!guild) {
+      logger.error(`Bot is not connected to guild ${doc.guild}`);
+      return;
+    }
 
     const guildChannel = guild.channels.find(chn => chn.name == config.discord.channel);
-    if (!guildChannel) return;
+    if (!guildChannel) {
+      logger.error(`Couldn't find a channel '${config.discord.channel}' in the guild ${guild.name}`);
+      return;
+    }
 
     const guildUser = guild.members.find(user => user.user.id == doc.user);
-    if (!guildUser) return;
+    if (!guildUser) {
+      logger.error(`The user ${doc.user} is not in the guild ${guild.name}`);
+      return;
+    }
 
     const twitchChannel = await client.twitch.kraken.channels.getChannel(stream.userId);
-    if (!twitchChannel) return;
+    if (!twitchChannel) {
+      logger.error(`No channel called found for Twitch user ${stream.userDisplayName}`);
+      return;
+    }
 
     const game = await stream.getGame();
     const artworkUrl = game.boxArtUrl.replace('{width}', 144).replace('{height}', 192);
@@ -42,7 +57,7 @@ function streamChangeCallback(stream) {
       .setFooter(twitchChannel.url);
 
     guildChannel.send(`${stream.userDisplayName} just went live with title: ${stream.title}`, shill).then(() => {
-      console.log(`Shilled for ${stream.userDisplayName}`);
+      logger.debug(`Shilled for ${stream.userDisplayName}`);
     });
   });
 }
@@ -56,7 +71,7 @@ client.once('ready', async () => {
     if (docs) {
       docs.forEach(async doc => {
         await client.listener.subscribeToStreamChanges(doc.twitchId, streamChangeCallback);
-        console.debug(`Listening to ${doc.user} with Twitch id ${doc.twitchId} for stream events`);
+        logger.debug(`Listening to ${doc.user} with Twitch id ${doc.twitchId} for stream events`);
       });
     }
   });
@@ -76,7 +91,7 @@ client.on('message', message => {
   // Check if already added to the database
   db.findOne({ user: message.author.id, guild: message.guild.id }, async (err, doc) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
       return;
     }
 
@@ -100,11 +115,11 @@ client.on('message', message => {
     };
     db.insert(newDoc, async (err, insertedDoc) => {
       if (err) {
-        console.error(err);
+        logger.error(err);
         return;
       }
       await client.listener.subscribeToStreamChanges(insertedDoc.twitchId, streamChangeCallback);
-      console.debug(`Listening to ${insertedDoc.user} with Twitch id ${insertedDoc.twitchId} for stream events`);
+      logger.debug(`Listening to ${insertedDoc.user} with Twitch id ${insertedDoc.twitchId} for stream events`);
       message.author.send(`Will now shill for: ${twitchUser.name}`);
     });
   });
