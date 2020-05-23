@@ -4,12 +4,32 @@ const client = new Discord.Client();
 const config = require('./config.json');
 
 const TwitchClient = require('twitch').default;
+const WebHookListener = require('twitch-webhooks').default;
 
 const Datastore = require('nedb');
 const db = new Datastore({ filename : config.database.path, autoload : true });
 
 client.once('ready', async () => {
 	client.twitch = TwitchClient.withClientCredentials(config.twitch.id, config.twitch.secret);
+	client.listener = await WebHookListener.create(client.twitch, config.twitch.webhooks);
+	client.listener.listen();
+	db.find({ }, (err, docs) => {
+		if (err) throw err;
+		if (docs) {
+			docs.forEach(async doc => {
+				await client.listener.subscribeToStreamChanges(doc.twitchId, async stream => {
+					if (stream) {
+						console.log(`${stream.userDisplayName} just went live with title: ${stream.title}`);
+					}
+					else {
+						const user = await client.twitch.helix.users.getUserById(doc.twitchId);
+						console.log(`${user.displayName} just went offline`);
+					}
+				});
+				console.debug(`Listening to ${doc.user} with Twitch id ${doc.twitchId} for stream events`);
+			});
+		}
+	});
 });
 
 client.on('message', message => {
