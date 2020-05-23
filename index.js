@@ -9,6 +9,25 @@ const WebHookListener = require('twitch-webhooks').default;
 const Datastore = require('nedb');
 const db = new Datastore({ filename: config.database.path, autoload: true });
 
+// TODO: only works with one guild per user
+function streamChangeCallback(stream) {
+  if (!stream) return;
+
+  db.findOne({ twitchId: stream.userId }, async (err, doc) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    const guild = client.guilds.find(gld => gld.id == doc.guild);
+
+    // TODO: if this happens then the database has users from a server the bot isn't on
+    if (!guild) return;
+
+    const channel = guild.channels.find(chn => chn.name == config.discord.channel);
+    channel.send(`${stream.userDisplayName} just went live with title: ${stream.title}`);
+  });
+}
+
 client.once('ready', async () => {
   client.twitch = TwitchClient.withClientCredentials(config.twitch.id, config.twitch.secret);
   client.listener = await WebHookListener.create(client.twitch, config.twitch.webhooks);
@@ -17,15 +36,7 @@ client.once('ready', async () => {
     if (err) throw err;
     if (docs) {
       docs.forEach(async doc => {
-        await client.listener.subscribeToStreamChanges(doc.twitchId, async stream => {
-          if (stream) {
-            console.log(`${stream.userDisplayName} just went live with title: ${stream.title}`);
-          }
-          else {
-            const user = await client.twitch.helix.users.getUserById(doc.twitchId);
-            console.log(`${user.displayName} just went offline`);
-          }
-        });
+        await client.listener.subscribeToStreamChanges(doc.twitchId, streamChangeCallback);
         console.debug(`Listening to ${doc.user} with Twitch id ${doc.twitchId} for stream events`);
       });
     }
@@ -44,7 +55,7 @@ client.on('message', message => {
   if (command != 'add') return;
 
   // Check if already added to the database
-  db.findOne({ user: message.author.id }, async (err, doc) => {
+  db.findOne({ user: message.author.id, guild: message.guild.id }, async (err, doc) => {
     if (err) {
       console.error(err);
       return;
@@ -65,13 +76,16 @@ client.on('message', message => {
 
     const newDoc = {
       user: message.author.id,
+      guild: message.guild.id,
       twitchId: twitchUser.id,
     };
-    db.insert(newDoc, err => {
+    db.insert(newDoc, async (err, insertedDoc) => {
       if (err) {
         console.error(err);
         return;
       }
+      await client.listener.subscribeToStreamChanges(insertedDoc.twitchId, streamChangeCallback);
+      console.debug(`Listening to ${insertedDoc.user} with Twitch id ${insertedDoc.twitchId} for stream events`);
       message.author.send(`Will now shill for: ${twitchUser.name}`);
     });
   });
