@@ -8,11 +8,12 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start" : "node index.js",
+    "start": "node index.js",
     "lint": "eslint . --ext .js"
   },
   "dependencies": {
     "discord.js": "^11.5.1",
+    "nedb": "^1.8.0",
     "twitch": "^4.0.2"
   },
   "devDependencies": {
