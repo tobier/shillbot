@@ -19,12 +19,31 @@ function streamChangeCallback(stream) {
       return;
     }
     const guild = client.guilds.find(gld => gld.id == doc.guild);
-
     // TODO: if this happens then the database has users from a server the bot isn't on
     if (!guild) return;
 
-    const channel = guild.channels.find(chn => chn.name == config.discord.channel);
-    channel.send(`${stream.userDisplayName} just went live with title: ${stream.title}`);
+    const guildChannel = guild.channels.find(chn => chn.name == config.discord.channel);
+    if (!guildChannel) return;
+
+    const guildUser = guild.members.find(user => user.user.id == doc.user);
+    if (!guildUser) return;
+
+    const twitchChannel = await client.twitch.kraken.channels.getChannel(stream.userId);
+    if (!twitchChannel) return;
+
+    const game = await stream.getGame();
+    const artworkUrl = game.boxArtUrl.replace('{width}', 144).replace('{height}', 192);
+    const shill = new Discord.RichEmbed()
+      .setAuthor(guildUser.displayName, guildUser.user.avatarURL, twitchChannel.url)
+      .setColor('#0099ff')
+      .setTitle(stream.title)
+      .setDescription(game.name)
+      .setThumbnail(artworkUrl)
+      .setFooter(twitchChannel.url);
+
+    guildChannel.send(`${stream.userDisplayName} just went live with title: ${stream.title}`, shill).then(() => {
+      console.log(`Shilled for ${stream.userDisplayName}`);
+    });
   });
 }
 
