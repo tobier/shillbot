@@ -14,7 +14,8 @@
   "dependencies": {
     "discord.js": "^11.5.1",
     "nedb": "^1.8.0",
-    "twitch": "^4.0.2"
+    "twitch": "^4.0.10",
+    "twitch-webhooks": "^4.0.10"
   },
   "devDependencies": {
     "eslint": "^6.8.0"

@@ -3,11 +3,13 @@ const client = new Discord.Client();
 
 const config = require('./config.json');
 
+const TwitchClient = require('twitch').default;
+
 const Datastore = require('nedb');
 const db = new Datastore({ filename : config.database.path, autoload : true });
 
-client.once('ready', () => {
-	console.log('Ready!');
+client.once('ready', async () => {
+	client.twitch = TwitchClient.withClientCredentials(config.twitch.id, config.twitch.secret);
 });
 
 client.on('message', message => {
@@ -22,28 +24,35 @@ client.on('message', message => {
 	if (command != 'add') return;
 
 	// Check if already added to the database
-	db.findOne({ user : message.author.id }, (err, doc) => {
+	db.findOne({ user : message.author.id }, async (err, doc) => {
 		if (err) {
 			console.error(err);
 			return;
 		}
 
 		if (doc) {
-			message.author.send(`Already registed with Twitch id: ${doc.twitchId}`);
+			message.author.send('You already have registered with me!');
 			return;
 		}
 
-		const twitchId = args.shift();
+		// Verify that a valid twitch user was provided
+		const providedUserName = args.shift();
+		const twitchUser = await client.twitch.helix.users.getUserByName(providedUserName);
+		if (!twitchUser) {
+			message.author.send(`Couldn't find a Twitch user with the name: ${providedUserName}`);
+			return;
+		}
+
 		const newDoc = {
 			user : message.author.id,
-			twitchId : twitchId,
+			twitchId : twitchUser.id,
 		};
-		db.insert(newDoc, (err, insertedDoc) => {
+		db.insert(newDoc, err => {
 			if (err) {
 				console.error(err);
 				return;
 			}
-			message.author.send(`Will now shill for: ${insertedDoc.twitchId}`);
+			message.author.send(`Will now shill for: ${twitchUser.name}`);
 		});
 	});
 });
