@@ -1,0 +1,21 @@
+{
+  "name": "shillbot",
+  "version": "0.1.0",
+  "description": "Shillbot is a simple Discord bot that announces Twitch streams",
+  "main": "index.js",
+  "repository": "git@github.com:tobier/shillbot.git",
+  "author": "Tobias Eriksson <tti.eriksson@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start" : "node index.js",
+    "lint": "eslint . --ext .js"
+  },
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "twitch": "^4.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  }
+}
