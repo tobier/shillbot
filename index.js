@@ -64,7 +64,8 @@ function streamChangeCallback(stream) {
 
 client.once('ready', async () => {
   client.twitch = TwitchClient.withClientCredentials(config.twitch.id, config.twitch.secret);
-  client.listener = await WebHookListener.create(client.twitch, config.twitch.webhooks);
+  client.listener = await WebHookListener.create(client.twitch, { port: config.twitch.webhooks.port });
+  logger.info('Webhooks listener established');
   client.listener.listen();
   db.find({}, (err, docs) => {
     if (err) throw err;
