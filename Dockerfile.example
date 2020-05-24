@@ -1,0 +1,21 @@
+# This is an example Dockerfile for the shillbot; for simplicty we use an official node image
+FROM node:14
+
+# Create an area for the database, should probably be a volume so its contents are not lost
+RUN mkdir -p /opt/shillbot && mkdir -p /var/shillbot
+
+# Copy the code and configuration
+WORKDIR /opt/shillbot
+COPY index.js .
+COPY package.json .
+COPY yarn.lock .
+COPY config.json .
+
+# Install dependencies
+RUN yarn install
+
+# Expose the port in your config.json, here we use 8090
+EXPOSE 8090
+
+# Run the bot on startup
+ENTRYPOINT [ "node", "index.js" ]

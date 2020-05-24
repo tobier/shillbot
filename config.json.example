@@ -1,0 +1,17 @@
+{
+  "database": {
+    "path": "/var/shillbot/twitch.db"
+  },
+  "discord": {
+    "prefix": "!",
+    "channel": "streams",
+    "token": "<add discord token here>"
+  },
+  "twitch": {
+    "id": "<add twitch client id here>",
+    "secret": "<add twitch secret here>",
+    "webhooks": {
+      "port": 8090
+    }
+  }
+}

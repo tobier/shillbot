@@ -56,7 +56,7 @@ function streamChangeCallback(stream) {
       .setThumbnail(artworkUrl)
       .setFooter(twitchChannel.url);
 
-    guildChannel.send(`${stream.userDisplayName} just went live with title: ${stream.title}`, shill).then(() => {
+    guildChannel.send(`${guildUser.displayName} just went live! ${twitchChannel.url}`, shill).then(() => {
       logger.debug(`Shilled for ${stream.userDisplayName}`);
     });
   });
