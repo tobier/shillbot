@@ -1,8 +1,7 @@
 # This is an example Dockerfile for the shillbot; for simplicty we use an official node image
 FROM node:14
 
-# Create an area for the database, should probably be a volume so its contents are not lost
-RUN mkdir -p /opt/shillbot && mkdir -p /var/shillbot
+RUN mkdir -p /opt/shillbot
 
 # Copy the code and configuration
 WORKDIR /opt/shillbot
