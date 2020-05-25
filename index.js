@@ -90,7 +90,7 @@ client.on('message', message => {
   if (command != 'add') return;
 
   // Check if message originates from a DM channel, if so return.
-  if (message.channel instanceof DMChannel) {
+  if (message.guild === null) {
     message.reply('Ah ah ah, you did not say the magic word! Try to use *!add* in a text channel instead.');
     return;
   }
