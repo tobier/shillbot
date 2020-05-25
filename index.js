@@ -89,6 +89,10 @@ client.on('message', message => {
   const command = args.shift().toLowerCase();
   if (command != 'add') return;
 
+  // Check if message originates from a DM channel
+  if (message.channel instanceof DMChannel)
+    message.reply('Ah ah ah, you did not say the magic word! Try to use *!add* in a text channel instead.');
+
   // Check if already added to the database
   db.findOne({ user: message.author.id, guild: message.guild.id }, async (err, doc) => {
     if (err) {
