@@ -78,12 +78,23 @@ client.once('ready', async () => {
   });
 });
 
+
 client.on('message', message => {
+  // Only care if the bot is mentioned
+  if (!message.isMentioned(client.user)) return;
+
+  const trimmedContent = message.content
+    .replace(Discord.MessageMentions.CHANNELS_PATTERN, '')
+    .replace(Discord.MessageMentions.EVERYONE_PATTERN, '')
+    .replace(Discord.MessageMentions.ROLES_PATTERN, '')
+    .replace(Discord.MessageMentions.USERS_PATTERN, '')
+    .trim();
+
   // Don't care about non-prefix messages or bot authors
-  if (!message.content.startsWith(config.discord.prefix) || message.author.bot) return;
+  if (!trimmedContent.startsWith(config.discord.prefix) || message.author.bot) return;
 
   // We only care about the add command that takes one argument (the Twitch username)
-  const args = message.content.slice(config.discord.prefix.length).split(/ +/);
+  const args = trimmedContent.slice(config.discord.prefix.length).split(/ +/);
   if (args.length != 2) return;
 
   const command = args.shift().toLowerCase();
