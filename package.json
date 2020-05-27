@@ -8,12 +8,14 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start": "node index.js | ./node_modules/.bin/pino-pretty",
+    "start": "forever index.js | ./node_modules/.bin/pino-pretty",
     "lint": "eslint . --ext .js"
   },
   "dependencies": {
     "discord.js": "^11.5.1",
+    "forever": "^3.0.0",
     "nedb": "^1.8.0",
+    "pino-pretty": "^4.0.0",
     "twitch": "^4.0.10",
     "twitch-webhooks": "^4.0.10"
   },
